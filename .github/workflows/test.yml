@@ -7,7 +7,11 @@ on:
   pull_request:
 
 env:
-  AKMODS_FLAVOR:
+  SUPPORT: latest
+  AKMODS_FLAVOR: main
+  MAJOR_VERSION: 39
+  IMAGE_VARIANT: nokmods
+  IMAGE_NAME: silverblue
 
 jobs:
   run-main-build:
@@ -19,22 +23,6 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 5
-      matrix:
-        image_name:
-          - silverblue
-        major_version:
-          - 39
-        image_variant:
-          - nokmods
-        include:
-          - major_version: 39
-            support: latest
-          #- major_version: 38
-          #  support: gts
-        exclude:
-          # There is no Fedora 39 version of lxqt as it was replaced by lazurite
-          - image_name: lxqt
-            major_version: 39
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,94 +34,14 @@ jobs:
         with:
           container_ref: main
           push_container: "false"
-          container_repo: ublue-os/main
-          support: ${{ matrix.support }}
-          target: ${{ matrix.image_variant }}
-          image_name: ${{ matrix.image_name }}
-          version: ${{ matrix.major_version }}
-          image_variant: ${{ matrix.image_variant }}
+          file: ./test/Containerfile
+          support: ${{ env.SUPPORT }}
+          target: ${{ env.IMAGE_NAME }}
+          image_name: ${{ env.IMAGE_NAME }}
+          version: ${{ env.MAJOR_VERSION }}
+          image_variant: ${{ env.IMAGE_VARIANT }}
           signing_key: ${{ secrets.SIGNING_SECRET }}
           container_registry: ghcr.io/${{ github.repository }}
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-  run-bluefin-build:
-    name: Build uBlue-OS Bluefin
-    runs-on: ubuntu-22.04
-    continue-on-error: false
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      max-parallel: 5
-      matrix:
-        image_name:
-          - bluefin-dx
-        major_version:
-          - 39
-        image_variant:
-          - asus
-        include:
-          - major_version: 39
-            support: latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Determine AKMODS_FLAVOR
-        run: |
-          if [[ "${{ matrix.image_variant }}" =~ ^asus* ]]; then
-              echo "AKMODS_FLAVOR=asus" >> $GITHUB_ENV
-          elif [[ "${{ matrix.image_variant }}" =~ ^surface* ]]; then
-              echo "AKMODS_FLAVOR=surface" >> $GITHUB_ENV
-          else
-              echo "AKMODS_FLAVOR=main" >> $GITHUB_ENV
-          fi
-
-      - name: Build image
-        uses: ./
-        with:
-          container_ref: main
-          push_container: "false"
-          container_repo: ublue-os/bluefin
-          support: ${{ matrix.support }}
-          target: ${{ matrix.image_name }}
-          image_name: ${{ matrix.image_name }}
-          version: ${{ matrix.major_version }}
-          image_variant: ${{ matrix.image_variant }}
-          signing_key: ${{ secrets.SIGNING_SECRET }}
-          container_registry: ghcr.io/${{ github.repository }}
+          container_repo: bayou-brogrammer/build-container-action
           extra_build_args: |
             AKMODS_FLAVOR=${{ env.AKMODS_FLAVOR }}
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-  check:
-    name: Check build successful
-    if: ${{ !cancelled() }}
-    runs-on: ubuntu-22.04
-    needs:
-      - run-main-build
-      - run-bluefin-build
-    steps:
-      - name: Exit on failure for main
-        if: ${{ needs.run-main-build.result == 'failure' || needs.run-main-build.result == 'skipped' }}
-        shell: bash
-        run: exit 1
-
-      - name: Exit on failure for bluefin
-        if: ${{ needs.run-bluefin-build.result == 'failure' || needs.run-bluefin-build.result == 'skipped' }}
-        shell: bash
-        run: exit 1
-
-      - name: Exit
-        shell: bash
-        run: exit 0

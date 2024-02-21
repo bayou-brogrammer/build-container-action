@@ -45,6 +45,10 @@ inputs:
     description: whether to push the resulting container image
     required: false
     default: "true"
+  file:
+    description: path to the Containerfile
+    required: false
+    default: ./Containerfile
 
 runs:
   using: "composite"
@@ -56,6 +60,11 @@ runs:
         ref: ${{ inputs.container_ref }}
         repository: ${{ inputs.container_repo }}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     # Workaround bug where capital letters in your GitHub username make it impossible to push to GHCR.
     # https://github.com/macbre/push-to-ghcr/issues/12
     - name: Lowercase Registry
@@ -64,7 +73,7 @@ runs:
       with:
         string: ${{ inputs.container_registry }}
 
-    - name: Export registry name 
+    - name: Export registry name
       shell: bash
       run: echo "IMAGE_REGISTRY=${{ steps.registry_case.outputs.lowercase }}" >> $GITHUB_ENV
 
@@ -78,7 +87,7 @@ runs:
       env:
         REGISTRY_USER: ${{ github.actor }}
         REGISTRY_PASSWORD: ${{ github.token }}
-        
+
     - name: Free disk space (Ubuntu)
       uses: jlumbroso/free-disk-space@v1.3.1
       with:
@@ -110,48 +119,6 @@ runs:
           echo "image_name=${{ format('{0}-{1}', inputs.image_name, inputs.image_variant) }}" >> $GITHUB_OUTPUT
         fi
 
-    - name: Generate tags
-      id: generate-tags
-      shell: bash
-      run: |
-        # Run on main
-        if [[ ${{ github.event_name }} != 'pull_request' && ${{ github.ref_name }} == ${{ github.event.repository.default_branch }} ]]
-        then
-          BUILD_TAG="${{ inputs.version }}"
-          COMMIT_TAGS=()
-          COMMIT_TAGS+=("${{ inputs.version }}")
-          if [[ -n "${{ inputs.support }}" ]]
-          then
-            COMMIT_TAGS+=("${{ inputs.support }}")
-          fi
-          # VERSION-YYYYMMDD
-          TIMESTAMP="$(date +%Y%m%d)"
-          COMMIT_TAGS+=("${BUILD_TAG}-${TIMESTAMP}")
-        fi
-
-        # Pull Request
-        if [[ ${{ github.event_name }} == "pull_request" ]]
-        then
-          # pr-#-VERSION
-          BUILD_TAG="pr-${{ github.event.number }}-${{ inputs.version }}"
-          COMMIT_TAGS=()
-          # pr-#-VERSION-SHA
-          SHA_SHORT="${GITHUB_SHA::7}"
-          COMMIT_TAGS+=("$BUILD_TAG-${SHA_SHORT}")
-          # pr-#-VERSION-YYYYMMDD
-          TIMESTAMP="$(date +%Y%m%d)"
-          COMMIT_TAGS+=("${BUILD_TAG}-${TIMESTAMP}")
-        fi
-
-        # Other
-        if [[ -z ${BUILD_TAG} ]]
-        then
-          SHA_SHORT="${GITHUB_SHA::7}"
-          BUILD_TAG="${SHA_SHORT}"
-        fi
-
-        echo "tags=${BUILD_TAG} ${COMMIT_TAGS[*]}" >> $GITHUB_OUTPUT
-
     # Build metadata
     - name: Image Metadata
       uses: docker/metadata-action@v5
@@ -162,9 +129,15 @@ runs:
         labels: |
           org.opencontainers.image.version=${{ inputs.version }}
           org.opencontainers.image.title=${{ steps.generate-name.outputs.image_name }}
-          org.opencontainers.image.description=An interpretation of the Ubuntu spirit built on Fedora technology 
-          io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/main/README.md
+          org.opencontainers.image.description=An interpretation of the Ubuntu spirit built on Fedora technology
           io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4
+          io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/main/README.md
+        tags: |
+            type=sha
+            type=schedule
+            type=ref,event=tag
+            type=ref,event=branch
+            type=semver,pattern={{version}}
 
     - name: Determine extra args
       id: extra-args
@@ -180,15 +153,17 @@ runs:
     # Build image using Buildah action
     - name: Build Image
       id: build_image
-      uses: redhat-actions/buildah-build@v2
+      uses: docker/build-push-action@v5
       with:
-        oci: false
+        context: .
+        pull: true
+        cache-from: type=gha
+        file: ${{ inputs.file }}
+        cache-to: type=gha,mode=max
         labels: ${{ steps.meta.outputs.labels }}
+        push: ${{ inputs.push_container == 'true' }}
         tags: ${{ steps.generate-tags.outputs.tags }}
         image: ${{ steps.generate-name.outputs.image_name }}
-        #TODO: Split Containerfiles
-        containerfiles: |
-          ./Containerfile
         build-args: |
           IMAGE_NAME=${{ inputs.image_name }}
           TARGET_BASE=${{ inputs.image_variant }}
@@ -196,9 +171,6 @@ runs:
           FEDORA_MAJOR_VERSION=${{ inputs.version }}
           IMAGE_VENDOR=${{ github.repository_owner }}
           ${{ inputs.extra_build_args }}
-        extra-args: |
-          --pull
-          ${{ steps.extra-args.outputs.args }}
 
     - name: Get list of images to verify
       id: images_to_verify
@@ -215,29 +187,6 @@ runs:
       with:
         containers: ${{ steps.images_to_verify.output.ublue_images }}
         pubkey: https://raw.githubusercontent.com/ublue-os/main/main/cosign.pub
-
-    # Push the image to GHCR (Image Registry)
-    - name: Push To GHCR
-      uses: redhat-actions/push-to-registry@v2
-      if: inputs.push_container == 'true'
-      id: push
-      env:
-        REGISTRY_USER: ${{ github.actor }}
-        REGISTRY_PASSWORD: ${{ github.token }}
-      with:
-        username: ${{ env.REGISTRY_USER }}
-        registry: ${{ env.IMAGE_REGISTRY }}
-        password: ${{ env.REGISTRY_PASSWORD }}
-        image: ${{ steps.build_image.outputs.image }}
-        tags: ${{ steps.generate-tags.outputs.tags }}
-
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      if: inputs.push_container == 'true' && github.event_name == 'push' && github.ref == github.event.repository.default_branch
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
 
     # Sign container
     - uses: sigstore/cosign-installer@v3.4.0
