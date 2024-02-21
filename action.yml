@@ -150,6 +150,31 @@ runs:
           echo "args=--target=${{ inputs.target }}" >> $GITHUB_OUTPUT
         fi
 
+    - name: Cache var-cache-rpm-ostree
+      id: cache-var-cache-rpm-ostree
+      uses: actions/cache@v3
+      with:
+        path: var-cache-rpm-ostree
+        key: var-cache-rpm-ostree-${{ hashFiles('Dockerfile') }}
+    - name: Cache var-lib-rpm-ostree
+      id: cache-var-lib-rpm-ostree
+      uses: actions/cache@v3
+      with:
+        path: var-lib-rpm-ostree
+        key: var-lib-rpm-ostree-${{ hashFiles('Dockerfile') }}
+    - name: inject var-cache-rpm-ostree into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
+      with:
+        cache-source: var-cache-rpm-ostree
+        cache-target: /var/cache/rpm-ostree
+        skip-extraction: ${{ steps.cache-var-cache-rpm-ostree.outputs.cache-hit }}
+    - name: inject var-lib-rpm-ostree into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
+      with:
+        cache-source: var-lib-rpm-ostree
+        cache-target: /var/lib/rpm-ostree
+        skip-extraction: ${{ steps.cache-var-lib-rpm-ostree.outputs.cache-hit }}
+
     # Build image using Buildah action
     - name: Build Image
       id: build_image
@@ -163,7 +188,6 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         push: ${{ inputs.push_container == 'true' }}
         tags: ${{ steps.generate-tags.outputs.tags }}
-        image: ${{ steps.generate-name.outputs.image_name }}
         build-args: |
           IMAGE_NAME=${{ inputs.image_name }}
           TARGET_BASE=${{ inputs.image_variant }}
