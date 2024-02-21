@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0](https://github.com/bayou-brogrammer/build-container-action/compare/v1..v1.0.0) - 2024-02-21
+## [unreleased]
 
 ### ⛰️  Features
 
@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 - *(docs)* Gen changelog - ([ce611a1](https://github.com/bayou-brogrammer/build-container-action/commit/ce611a1a1e676bfeea0df29dc6bc098462da7f1f))
 - *(docs)* Update example in README.md - ([9fdcad7](https://github.com/bayou-brogrammer/build-container-action/commit/9fdcad7176cc87ada6ed70204a7ebb5f1a788161))
+- *(release)* V1 release - ([9736f64](https://github.com/bayou-brogrammer/build-container-action/commit/9736f64a98a0b6f4d3ba196ad59bc0813845611c))
 - Remove cache from buildah - ([883c540](https://github.com/bayou-brogrammer/build-container-action/commit/883c54076bafc2db3b01466426f6ff57b2060489))
 - Scaffold - ([52ce9e4](https://github.com/bayou-brogrammer/build-container-action/commit/52ce9e446a025ff0fb8c048e3cf2ea22fb3f35aa))
 
