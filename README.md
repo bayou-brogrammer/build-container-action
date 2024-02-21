@@ -21,66 +21,53 @@ This is a github action to build container images. This tool was designed for uB
 ## Example
 
 ```yml
-name: Build and Push Image
+name: Test container workflow
 
 on:
-  schedule:
-    - cron: "0 6 * * *" # at 06:00 UTC (midnight CST)
-
-  pull_request:
-    branches:
-      - main
-      - testing
-    paths-ignore:
-      - "**.md"
-
   push:
     branches:
       - main
-      - testing
-    tags:
-      - "v*.*.*"
-    paths-ignore:
-      - "**.md"
-
-  workflow_dispatch:
+  pull_request:
 
 env:
-  IMAGE_NAME: my-img
-  IMAGE_FLAVOR: asus
-  AKMODS_FLAVOR: asus
-  FEDORA_MAJOR_VERSION: 39
+  SUPPORT: latest
+  MAJOR_VERSION: 39
+  AKMODS_FLAVOR: main
+  IMAGE_VARIANT: nokmods
+  IMAGE_NAME: silverblue
 
-run-build:
-  name: Build uBlue-OS Bluefin
-  runs-on: ubuntu-22.04
-  continue-on-error: false
-  permissions:
-    contents: read
-  strategy:
-    fail-fast: false
-    max-parallel: 5
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+jobs:
+  run-main-build:
+    name: Build uBlue-OS Main
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Build image
-      uses: bayou-brogrammer/build-container-action@v1
-      with:
-        container_ref: main
-        push_container: "false"
-        container_repo: ublue-os/bluefin
-        support: latest
-        target: my-target-stage
-        image_name: ${{ env.IMAGE_NAME }}
-        image_variant: ${{ env.IMAGE_FLAVOR }}
-        version: ${{ env.FEDORA_MAJOR_VERSION }}
-        signing_key: ${{ secrets.SIGNING_SECRET }}
-        container_registry: ghcr.io/${{ github.repository }}
-        extra_build_args: |
-          AKMODS_FLAVOR=${{ env.AKMODS_FLAVOR }}
+      - name: Build image
+        uses: ./
+        with:
+          container_ref: main
+          file: ./Containerfile
+          push_container: "false"
+          container_repo: ublue-os/main
+          signing_key: ${{ secrets.SIGNING_SECRET }}
+          container_registry: ghcr.io/${{ github.repository }}
+          support: ${{ env.SUPPORT }}
+          target: ${{ env.IMAGE_NAME }}
+          image_name: ${{ env.IMAGE_NAME }}
+          version: ${{ env.MAJOR_VERSION }}
+          image_variant: ${{ env.IMAGE_VARIANT }}
+          extra_build_args: |
+            AKMODS_FLAVOR=${{ env.AKMODS_FLAVOR }}
 ```
 
 ### Contributing
