@@ -198,8 +198,6 @@ runs:
           ${{ inputs.extra_build_args }}
         extra-args: |
           --pull
-          --cache-from=type=gha
-          --cache-to=type=gha,mode=max
           ${{ steps.extra-args.outputs.args }}
 
     - name: Get list of images to verify
