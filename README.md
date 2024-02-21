@@ -60,7 +60,7 @@ jobs:
           submodules: recursive
 
       - name: Build image
-        uses: ./
+        uses: cosmos-container-action@main
         with:
           container_ref: main
           file: ./Containerfile

@@ -64,6 +64,31 @@ runs:
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+    
+    - name: Cache var-cache-rpm-ostree
+      id: cache-var-cache-rpm-ostree
+      uses: actions/cache@v3
+      with:
+        path: var-cache-rpm-ostree
+        key: var-cache-rpm-ostree-${{ hashFiles('Dockerfile') }}
+    - name: Cache var-lib-rpm-ostree
+      id: cache-var-lib-rpm-ostree
+      uses: actions/cache@v3
+      with:
+        path: var-lib-rpm-ostree
+        key: var-lib-rpm-ostree-${{ hashFiles('Dockerfile') }}
+    - name: inject var-cache-rpm-ostree into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
+      with:
+        cache-source: var-cache-rpm-ostree
+        cache-target: /var/cache/rpm-ostree
+        skip-extraction: ${{ steps.cache-var-cache-rpm-ostree.outputs.cache-hit }}
+    - name: inject var-lib-rpm-ostree into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
+      with:
+        cache-source: var-lib-rpm-ostree
+        cache-target: /var/lib/rpm-ostree
+        skip-extraction: ${{ steps.cache-var-lib-rpm-ostree.outputs.cache-hit }}
 
     # Workaround bug where capital letters in your GitHub username make it impossible to push to GHCR.
     # https://github.com/macbre/push-to-ghcr/issues/12
@@ -79,10 +104,9 @@ runs:
 
     - name: Log in to ghcr.io
       uses: redhat-actions/podman-login@v1
-      if: inputs.push_container == 'true' && github.event_name == 'push' && github.ref == github.event.repository.default_branch
       with:
-        registry: $IMAGE_REGISTRY
         username: ${{ env.REGISTRY_USER }}
+        registry: ${{ env.IMAGE_REGISTRY }}
         password: ${{ env.REGISTRY_PASSWORD }}
       env:
         REGISTRY_USER: ${{ github.actor }}
@@ -125,7 +149,7 @@ runs:
       id: meta
       with:
         images: |
-          ${{ steps.generate-name.outputs.image_name }}
+          ${{ steps.registry_case.outputs.lowercase }}/${{ steps.generate-name.outputs.image_name }}
         labels: |
           org.opencontainers.image.version=${{ inputs.version }}
           org.opencontainers.image.title=${{ steps.generate-name.outputs.image_name }}
@@ -150,31 +174,6 @@ runs:
           echo "args=--target=${{ inputs.target }}" >> $GITHUB_OUTPUT
         fi
 
-    - name: Cache var-cache-rpm-ostree
-      id: cache-var-cache-rpm-ostree
-      uses: actions/cache@v3
-      with:
-        path: var-cache-rpm-ostree
-        key: var-cache-rpm-ostree-${{ hashFiles('Dockerfile') }}
-    - name: Cache var-lib-rpm-ostree
-      id: cache-var-lib-rpm-ostree
-      uses: actions/cache@v3
-      with:
-        path: var-lib-rpm-ostree
-        key: var-lib-rpm-ostree-${{ hashFiles('Dockerfile') }}
-    - name: inject var-cache-rpm-ostree into docker
-      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
-      with:
-        cache-source: var-cache-rpm-ostree
-        cache-target: /var/cache/rpm-ostree
-        skip-extraction: ${{ steps.cache-var-cache-rpm-ostree.outputs.cache-hit }}
-    - name: inject var-lib-rpm-ostree into docker
-      uses: reproducible-containers/buildkit-cache-dance@v2.1.4
-      with:
-        cache-source: var-lib-rpm-ostree
-        cache-target: /var/lib/rpm-ostree
-        skip-extraction: ${{ steps.cache-var-lib-rpm-ostree.outputs.cache-hit }}
-
     # Build image using Buildah action
     - name: Build Image
       id: build_image
@@ -185,9 +184,10 @@ runs:
         cache-from: type=gha
         file: ${{ inputs.file }}
         cache-to: type=gha,mode=max
+        tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
         push: ${{ inputs.push_container == 'true' }}
-        tags: ${{ steps.generate-tags.outputs.tags }}
         build-args: |
           IMAGE_NAME=${{ inputs.image_name }}
           TARGET_BASE=${{ inputs.image_variant }}
