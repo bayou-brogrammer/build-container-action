@@ -1,22 +1,29 @@
 # Build Container Action
 
-This is a github action to build container images. This tool was designed for uBlue, but can be modified to accept any OIC.
+<div align="center" width="50%">
+  <img alt="orora" src="assets/thumbnail.webp">
+</div>
+
+## What am i?
+
+This is a github action to build and push container images to docker / github registry. This tool was designed for uBlue tooling, but can be modified to accept any OIC variant.
 
 ## Inputs
 
 | Parameter          | Description                             | Required | Default                                |
 | ------------------ | --------------------------------------- | -------- | -------------------------------------- |
-| image_name         | Name of the image to build              | true     | -                                      |
-| image_variant      | Name of the image variant               | false    | ""                                     |
+| file               | Path to the Containerfile               | false    | ./Containerfile                        |
+| target             | Target to build in Containerfile        | false    | none                                   |
 | version            | Primary tag to assign to the image      | true     | -                                      |
 | support            | Latest, gts, or empty                   | false    | ""                                     |
-| extra_build_args   | Extra args to be passed to buildah      | false    | ""                                     |
 | signing_key        | Key to sign images                      | true     | -                                      |
-| target             | Target to build in Containerfile        | false    | none                                   |
-| container_registry | Registry to store resulting container   | false    | ghcr.io/${{ github.repository_owner }} |
-| container_repo     | Repository for the container image      | false    | ${{ github.repository }}               |
+| image_name         | Name of the image to build              | true     | -                                      |
+| image_variant      | Name of the image variant               | false    | ""                                     |
 | container_ref      | Repository ref for the container image  | false    | ${{ github.ref }}                      |
+| container_repo     | Repository for the container image      | false    | ${{ github.repository }}               |
+| container_registry | Registry to store resulting container   | false    | ghcr.io/${{ github.repository_owner }} |
 | push_container     | Whether to push the resulting container | false    | "true"                                 |
+| extra_build_args   | Extra args to be passed to buildah      | false    | ""                                     |
 
 ## Example
 
