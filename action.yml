@@ -17,6 +17,9 @@ inputs:
     description: latest, gts, or empty
     required: false
     default: ""
+  extra_tags:
+    description: extra tags to be passed to buildah
+    required: false 
   extra_build_args:
     description: extra args to be passed to buildah
     required: false
@@ -184,7 +187,9 @@ runs:
         cache-from: type=gha
         file: ${{ inputs.file }}
         cache-to: type=gha,mode=max
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: |
+          ${{ steps.meta.outputs.tags }}
+          ${{ inputs.extra_tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         push: ${{ inputs.push_container == 'true' }}
