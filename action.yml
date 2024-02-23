@@ -52,7 +52,7 @@ inputs:
     description: path to the Containerfile
     required: false
     default: ./Containerfile
-
+  
 runs:
   using: "composite"
   steps:
@@ -106,7 +106,7 @@ runs:
       run: echo "IMAGE_REGISTRY=${{ steps.registry_case.outputs.lowercase }}" >> $GITHUB_ENV
 
     - name: Log in to ghcr.io
-      uses: redhat-actions/podman-login@v1
+      uses: docker/login-action@v3
       with:
         username: ${{ env.REGISTRY_USER }}
         registry: ${{ env.IMAGE_REGISTRY }}
@@ -152,7 +152,7 @@ runs:
       id: meta
       with:
         images: |
-          ${{ steps.registry_case.outputs.lowercase }}/${{ steps.generate-name.outputs.image_name }}
+          ${{ inputs.container_registry }}/${{ steps.generate-name.outputs.image_name }}
         labels: |
           org.opencontainers.image.version=${{ inputs.version }}
           org.opencontainers.image.title=${{ steps.generate-name.outputs.image_name }}
@@ -181,6 +181,9 @@ runs:
     - name: Build Image
       id: build_image
       uses: docker/build-push-action@v5
+      env:
+        DOCKER_BUILDKIT: "1"
+        BUILDX_EXPERIMENTAL: "1"
       with:
         context: .
         pull: true
@@ -191,8 +194,8 @@ runs:
           ${{ steps.meta.outputs.tags }}
           ${{ inputs.extra_tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        annotations: ${{ steps.meta.outputs.annotations }}
         push: ${{ inputs.push_container == 'true' }}
+        annotations: ${{ steps.meta.outputs.annotations }}
         build-args: |
           IMAGE_NAME=${{ inputs.image_name }}
           TARGET_BASE=${{ inputs.image_variant }}
@@ -225,7 +228,7 @@ runs:
       shell: bash
       if: inputs.push_container == 'true' && github.event_name == 'push' && github.ref == github.event.repository.default_branch
       run: |
-        cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ steps.registry_case.outputs.lowercase }}/${{ steps.build_image.outputs.image }}@${TAGS}
+        cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_REGISTRY }}/${{ steps.build_image.outputs.image }}@${TAGS}
       env:
         TAGS: ${{ steps.push.outputs.digest }}
         COSIGN_EXPERIMENTAL: "false"
