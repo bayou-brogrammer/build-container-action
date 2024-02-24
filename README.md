@@ -1,4 +1,4 @@
-# Build Container Action
+# Deploy Container Action
 
 <div align="center" width="50%">
   <img alt="orora" src="assets/thumbnail_gha.webp">
