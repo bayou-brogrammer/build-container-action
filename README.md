@@ -1,7 +1,7 @@
 # Build Container Action
 
 <div align="center" width="50%">
-  <img alt="orora" src="assets/thumbnail.webp">
+  <img alt="orora" src="assets/thumbnail_gha.webp">
 </div>
 
 ## What am i?
@@ -60,7 +60,7 @@ jobs:
           submodules: recursive
 
       - name: Build image
-        uses: cosmos-container-action@main
+        uses: deploy-container-action@main
         with:
           container_ref: main
           file: ./Containerfile
