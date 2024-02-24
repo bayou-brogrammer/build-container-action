@@ -2,11 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.1.0] - 2024-02-24
 
-### ⛰️ Features
+### ⛰️  Features
 
+- Release workflow - ([c6bd5ff](https://github.com/bayou-brogrammer/deploy-container-action/commit/c6bd5ff0a048bf33645d5bc82abc6c07bfd4adc2))
+- Add extra_tags input - ([0da12db](https://github.com/bayou-brogrammer/deploy-container-action/commit/0da12db44852eb899e3b877193512011e6c3cd46))
+- Add rpm-ostree caching from GHA - ([c3f00c3](https://github.com/bayou-brogrammer/deploy-container-action/commit/c3f00c3e3fdd324c5f50b6f3604c0e68201a6835))
 - Switch to docker in action - ([9b03cd6](https://github.com/bayou-brogrammer/deploy-container-action/commit/9b03cd6442e8b4310a10a378a24913437a0f75ee))
+
+### 🐛 Bug Fixes
+
+- Address missing tags and annotations - ([9d54320](https://github.com/bayou-brogrammer/deploy-container-action/commit/9d5432087718ff8cef93491ab389332eb2b09994))
 
 ### 📚 Documentation
 
@@ -14,9 +21,13 @@ All notable changes to this project will be documented in this file.
 
 ### ⚙️ Miscellaneous Tasks
 
-- _(docs)_ Gen changelog - ([ce611a1](https://github.com/bayou-brogrammer/deploy-container-action/commit/ce611a1a1e676bfeea0df29dc6bc098462da7f1f))
-- _(docs)_ Update example in README.md - ([9fdcad7](https://github.com/bayou-brogrammer/deploy-container-action/commit/9fdcad7176cc87ada6ed70204a7ebb5f1a788161))
-- _(release)_ V1 release - ([9736f64](https://github.com/bayou-brogrammer/deploy-container-action/commit/9736f64a98a0b6f4d3ba196ad59bc0813845611c))
+- *(docs)* Update inputs in readme and add thumbnail - ([e4536d4](https://github.com/bayou-brogrammer/deploy-container-action/commit/e4536d4b312d39a17fb23a367a3ff37fe1f8e4cc))
+- *(docs)* Gen changelog - ([ce611a1](https://github.com/bayou-brogrammer/deploy-container-action/commit/ce611a1a1e676bfeea0df29dc6bc098462da7f1f))
+- *(docs)* Update example in README.md - ([9fdcad7](https://github.com/bayou-brogrammer/deploy-container-action/commit/9fdcad7176cc87ada6ed70204a7ebb5f1a788161))
+- *(release)* V1 release - ([9736f64](https://github.com/bayou-brogrammer/deploy-container-action/commit/9736f64a98a0b6f4d3ba196ad59bc0813845611c))
+- Rebrand and prep for release - ([364ef84](https://github.com/bayou-brogrammer/deploy-container-action/commit/364ef84b6fcf432f09cddd6e962584c56c10ae00))
+- Rebrand to cosmos - ([f932654](https://github.com/bayou-brogrammer/deploy-container-action/commit/f93265458ff94d7204d82ee98cedf6181682e842))
+- Updates to docs - ([a1f8c0c](https://github.com/bayou-brogrammer/deploy-container-action/commit/a1f8c0c95b3ee558dd3cdeaef1c8459bd32d597a))
 - Remove cache from buildah - ([883c540](https://github.com/bayou-brogrammer/deploy-container-action/commit/883c54076bafc2db3b01466426f6ff57b2060489))
 - Scaffold - ([52ce9e4](https://github.com/bayou-brogrammer/deploy-container-action/commit/52ce9e446a025ff0fb8c048e3cf2ea22fb3f35aa))
 
