@@ -151,6 +151,8 @@ runs:
       uses: docker/metadata-action@v5
       id: meta
       with:
+        flavor: |
+          latest=true
         images: |
           ${{ inputs.container_registry }}/${{ steps.generate-name.outputs.image_name }}
         labels: |
